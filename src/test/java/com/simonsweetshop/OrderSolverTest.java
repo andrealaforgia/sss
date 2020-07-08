@@ -2,13 +2,16 @@ package com.simonsweetshop;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrderSolverTest {
 
@@ -60,6 +63,28 @@ class OrderSolverTest {
                 2000, 1,
                 250, 1
         ));
+    }
+
+    @Test
+    public void shouldCatchErrorConditions() {
+        givenTheOrderSizeIs(-1);
+        thenAnErrorIsRaised(this::whenSolvingTheOrder);
+
+        givenTheOrderSizeIs(100);
+        givenThePackSizesAre(null);
+        thenAnErrorIsRaised(this::whenSolvingTheOrder);
+
+        givenTheOrderSizeIs(100);
+        givenThePackSizesAre(Set.of());
+        thenAnErrorIsRaised(this::whenSolvingTheOrder);
+    }
+
+    private void givenThePackSizesAre(Set<Integer> packSizes) {
+        this.packSizes = packSizes;
+    }
+
+    private void thenAnErrorIsRaised(ThrowableAssert.ThrowingCallable callable) {
+        assertThatThrownBy(callable).isInstanceOf(IllegalArgumentException.class);
     }
 
     private void thenTheOrderShouldBeSolvedAs(ImmutableMap<Integer, Integer> expectedSolution) {
