@@ -2,13 +2,14 @@ package com.simonsweetshop;
 
 import com.google.common.collect.ImmutableMap;
 
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,7 @@ public class OrderSolver {
 
         Integer minimumPackSize = sortedPackSizes.last();
 
-        /**
+        /*
          * We normalize the order size: we cannot send any sweets less than the minimum pack size
          */
         int normalizedOrderSize = orderSize;
@@ -36,27 +37,28 @@ public class OrderSolver {
             normalizedOrderSize = (normalizedOrderSize / minimumPackSize) * minimumPackSize + minimumPackSize;
         }
 
-        List<Map<Integer, Integer>> solutions = new ArrayList<>();
+        AtomicReference<Map<Integer, Integer>> solution = new AtomicReference<>();
 
-        loopPackSizes(normalizedOrderSize, packSizes, ImmutableMap.of(), solution -> solutions.add(solution));
+        loopPackSizes(normalizedOrderSize, packSizes, ImmutableMap.of(), s -> {
+            if (solution.get() == null || s.values().stream().reduce(0, Integer::sum) < solution.get().values().stream().reduce(0, Integer::sum)) {
+                solution.set(s);
+            }
+        });
 
-        List<Map<Integer, Integer>> sortedSolutions = solutions.stream()
-                .sorted(Comparator.comparing(o -> o.values().stream().reduce(0, Integer::sum)))
-                .collect(Collectors.toList());
-
-        return sortedSolutions.get(0);
+        return solution.get();
     }
 
     private void loopMultipliers(int packSize, int maxMultiplier, int orderSize, Set<Integer> packSizes, Map<Integer, Integer> solution, Consumer<Map<Integer, Integer>> solutionConsumer) {
         for (int multiplier = 1; multiplier <= maxMultiplier; multiplier++) {
             int packOrderSize = packSize * multiplier;
             int newOrderSize = orderSize-packOrderSize;
+            var newSolution = ImmutableMap.<Integer, Integer>builder().putAll(solution).put(packSize, multiplier).build();
             if (newOrderSize == 0) {
-                solutionConsumer.accept(ImmutableMap.<Integer, Integer>builder().putAll(solution).put(packSize, multiplier).build());
+                solutionConsumer.accept(newSolution);
             } else {
                 loopPackSizes(newOrderSize,
                         packSizes.stream().filter(ps -> ps != packSize).collect(Collectors.toSet()),
-                        ImmutableMap.<Integer, Integer>builder().putAll(solution).put(packSize, multiplier).build(),
+                        newSolution,
                         solutionConsumer
                 );
             }
