@@ -63,6 +63,15 @@ class OrderSolverTest {
                 2000, 1,
                 250, 1
         ));
+
+        givenTheOrderSizeIs(12000);
+        givenThePackSizesAre(ImmutableSet.of(
+                250, 500, 1000, 4000, 5000
+        ));
+        whenSolvingTheOrder();
+        thenTheOrderShouldBeSolvedAs(ImmutableMap.of(
+                4000, 3
+        ));
     }
 
     @Test
