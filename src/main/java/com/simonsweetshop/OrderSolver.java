@@ -22,9 +22,9 @@ public class OrderSolver {
             throw new IllegalArgumentException("Invalid pack sizes!");
         }
 
-        NavigableSet<Integer> sortedPackSizes = new TreeSet<>(packSizes).descendingSet();
+        NavigableSet<Integer> sortedPackSizes = new TreeSet<>(packSizes);
 
-        Integer minimumPackSize = sortedPackSizes.last();
+        Integer minimumPackSize = sortedPackSizes.first();
 
         /*
          * We normalize the order size: we cannot send any sweets less than the minimum pack size
@@ -48,7 +48,7 @@ public class OrderSolver {
     private void loopMultipliers(int packSize, int maxMultiplier, int orderSize, Set<Integer> packSizes, Map<Integer, Integer> solution, Consumer<Map<Integer, Integer>> solutionConsumer) {
         for (int multiplier = 1; multiplier <= maxMultiplier; multiplier++) {
             int packOrderSize = packSize * multiplier;
-            int newOrderSize = orderSize-packOrderSize;
+            int newOrderSize = orderSize - packOrderSize;
             var newSolution = ImmutableMap.<Integer, Integer>builder().putAll(solution).put(packSize, multiplier).build();
             if (newOrderSize == 0) {
                 solutionConsumer.accept(newSolution);
